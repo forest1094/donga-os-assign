@@ -1,0 +1,150 @@
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.Queue;
+import java.util.Scanner;
+import java.util.Stack;
+
+public class Page {
+	static ArrayList<Integer> refString = new ArrayList<>();
+
+	public static void main(String[] args) throws IOException {
+//		Queue<Integer> q = new LinkedList<>();
+//		Stack<Integer> s = new Stack<>();
+//		
+//		s.push(10); s.push(20); s.push(30);
+//		
+//		for(int i=0; i<s.size(); i++){
+//			System.out.println(s.get(i));
+//		}
+//		
+//		s.pop();
+//		for(int i=0; i<s.size(); i++){
+//			System.out.println(s.get(i));
+//		}
+		
+		/***  File read Part  ***/
+		Scanner scanner = new Scanner(new FileReader("page.inp"));
+		
+		int n = scanner.nextInt();		// n is number of frame (memory size)
+		System.out.println("frame size: " + n);
+		
+		//get referenceString
+		while(true) {
+			int ref = scanner.nextInt();
+			
+			if (ref == -1)
+				break;
+			else
+				refString.add(ref);
+		}
+		scanner.close();
+		
+		/***  Run algorithm ***/
+		FIFO f = new FIFO(n, refString);
+		f.runAlgorithm();
+		
+		LRU l = new LRU(n, refString);
+		l.runAlgorithm();
+	}
+
+}
+
+abstract class PageReplace {
+	ArrayList<Integer> refString;
+	
+	int pageFault;
+	int frameSize;
+	
+	void printref() {
+		for(int i=0; i<refString.size(); i++)
+			System.out.print(refString.get(i) + " ");
+		
+		System.out.println();
+	}
+	
+	abstract int runAlgorithm();
+}
+
+class FIFO extends PageReplace{
+	private Queue<Integer> memory = new LinkedList<Integer>();
+	
+	public FIFO(int n, ArrayList<Integer> ref) {
+		refString = ref;
+		pageFault = 0;
+		frameSize = n;
+	}
+	
+	@Override
+	int runAlgorithm() {
+		
+		for(int i=0; i<refString.size(); i++) {
+			if(memory.size() < frameSize) {					//queue is not full
+				if(!memory.contains(refString.get(i))) {		//page fault!!!
+					pageFault++;
+					memory.offer(refString.get(i));
+//					System.out.println("queue size: " + memory.size());
+//					System.out.println("pagefault: " + pageFault + "\n");
+				}
+			} 
+			else {											//queue is full
+				if(!memory.contains(refString.get(i))) {		//page fault!!!
+					pageFault++;
+					memory.poll();
+					memory.offer(refString.get(i));
+//					System.out.println("queue size: " + memory.size());
+//					System.out.println("pagefault: " + pageFault + "\n");
+				}
+			}
+		}
+		System.out.println("FIFO's total pagefault: " + pageFault);
+		
+		return pageFault;
+	}
+}
+
+class LRU extends PageReplace{
+	private Stack<Integer> memory = new Stack<>();
+
+	public LRU(int n, ArrayList<Integer> ref) {
+		refString = ref;
+		pageFault = 0;
+		frameSize = n;
+	}
+	
+	@Override
+	int runAlgorithm() {
+
+		for(int i=0; i<refString.size(); i++) {
+			if(memory.size() < frameSize) {					//stack is not full
+				if(!memory.contains(refString.get(i))) {		//page fault
+					pageFault++;
+					memory.push(refString.get(i));
+				}
+				else {											//not page fault
+					memory.remove(refString.get(i));				//move data to stack's head
+					memory.push(refString.get(i));				
+				}
+			}
+			else {											//stack is full
+				if(!memory.contains(refString.get(i))) {		//page fault
+					pageFault++;
+					memory.remove(0);
+					memory.push(refString.get(i));
+				}
+				else {											//not page fault
+					memory.remove(refString.get(i));				//move data to stack's head
+					memory.push(refString.get(i));		
+				}
+			}
+			
+		}
+		System.out.println("LRU's total pagefault: " + pageFault);
+		return pageFault;
+	}
+}
+
+class OPT {
+	
+}
